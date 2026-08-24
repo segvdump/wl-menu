@@ -1,0 +1,34 @@
+# Default config written on first start.
+# include files merge first; keys in this file win.
+#
+# include = [
+#   "$XDG_CONFIG_HOME/wl-menu/theme.toml",
+# ]
+#
+# menu = "menu.jsonc"
+
+[layout]
+width = 420
+row_height = 36
+padding = 12
+max_rows = 12
+
+[font]
+family = "Hack Nerd Font Mono"
+size = 16
+
+[input]
+repeat_delay_ms = 400
+repeat_rate = 30
+
+# Initial focus in confirm dialog: "cancel" (safe) or "action"
+# [confirm]
+# default = "cancel"
+
+[theme]
+scrim = "rgba(11, 12, 22, 0.5)"
+background = "rgba(11, 12, 22, 0.95)"
+text = "rgba(221, 247, 255, 255)"
+border = "rgba(130, 250, 155, 89)"
+selected_background = "rgba(221, 247, 255, 20)"
+selected_text = "rgba(130, 250, 155, 255)"

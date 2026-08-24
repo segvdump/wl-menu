@@ -1,0 +1,27 @@
+[package]
+name = "wl-menu"
+version = "0.1.0"
+edition = "2021"
+description = "Wayland layer-shell hierarchical menu daemon"
+
+[[bin]]
+name = "wl-menu"
+path = "src/main.rs"
+
+[dependencies]
+calloop = "0.13"
+calloop-wayland-source = "0.3"
+clap = { version = "4", features = ["derive"] }
+fontdue = "0.9"
+libc = "0.2"
+memmap2 = "0.9"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+tiny-skia = "0.11"
+toml = "0.8"
+resvg = "0.43"
+wayland-client = "0.31"
+wayland-protocols = { version = "0.32", features = ["client"] }
+wayland-protocols-wlr = { version = "0.3", features = ["client"] }
+xkbcommon = "0.8"

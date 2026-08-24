@@ -1,0 +1,56 @@
+// Example menu tree for wl-menu.
+// Copy next to wl-menu.toml as menu.jsonc (or set `menu = "..."` in TOML).
+//
+// Dot ids nest under the parent prefix (system.reboot -> parent system).
+// Fields: label, icon, action, target, provider, aliases, confirm, confirmText, when, parent.
+
+{
+  "apps": {
+    "label": "Apps",
+    "icon": "theme:applications-other",
+    "provider": "apps",
+    "aliases": ["applications"]
+  },
+
+  "system": {
+    "label": "System",
+    "icon": "theme:system-shutdown",
+    "aliases": ["power-menu", "power"]
+  },
+  "system.lock": {
+    "label": "Lock",
+    "icon": "theme:system-lock-screen",
+    "action": "loginctl lock-session"
+  },
+  "system.logout": {
+    "label": "Log out",
+    "icon": "theme:system-log-out",
+    "action": "hyprctl dispatch exit",
+    "confirm": "Log out of this session?",
+    "confirmText": "Log out"
+  },
+  "system.reboot": {
+    "label": "Reboot",
+    "icon": "theme:system-reboot",
+    "action": "systemctl reboot",
+    "confirm": "Reboot the computer?",
+    "confirmText": "Reboot"
+  },
+  "system.shutdown": {
+    "label": "Shut down",
+    "icon": "theme:system-shutdown",
+    "action": "systemctl poweroff",
+    "confirm": "Shut down the computer?",
+    "confirmText": "Shutdown"
+  },
+
+  // Glyph icon + one-shot action (no confirm).
+  "notify": {
+    "label": "Notify",
+    "icon": "󰂚",
+    "action": "notify-send wl-menu 'Hello from menu.jsonc'"
+  }
+
+  // File icon example (path relative to this menu file):
+  // "custom": { "label": "Custom", "icon": "file:./icons/star.png", "action": "notify-send hi" }
+}
