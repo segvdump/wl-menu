@@ -1,4 +1,4 @@
-//! tiny-skia rendering for the wl-menu overlay.
+//! tiny-skia rendering for the wl-menu overlay (card, rows, icons, text).
 
 use crate::config::{FontConfig, Theme};
 use crate::icons::is_file_or_theme_icon;
@@ -6,7 +6,7 @@ use crate::state::{ActionConfirm, MenuSession};
 use fontdue::layout::{CoordinateSystem, Layout, LayoutSettings, TextStyle};
 use fontdue::{Font, FontSettings};
 use std::process::Command;
-use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Stroke};
+use tiny_skia::{Color, FillRule, Paint, Path, PathBuilder, Pixmap, Rect, Stroke};
 
 /// Load menu font via fontconfig, same approach as image-picker-wl.
 pub fn load_font(font_cfg: &FontConfig) -> Option<Font> {
@@ -79,13 +79,14 @@ pub fn render_frame(
     pixmap.fill(session.config.theme.scrim);
 
     let theme = &session.config.theme;
+    let radius = session.config.border_radius();
     draw_round_rect(
         &mut pixmap,
         layout.x,
         layout.y,
         layout.width,
         layout.height,
-        10.0,
+        radius,
         theme.background,
         Some((theme.border, 1.0)),
     );
@@ -151,6 +152,7 @@ fn draw_confirm(
     rows_top: f32,
 ) {
     let theme = &session.config.theme;
+    let radius = session.config.border_radius();
     let (_, yes, no) = session.confirm_lines();
     let options = [yes.as_str(), no.as_str()];
     for (index, label) in options.iter().enumerate() {
@@ -163,7 +165,7 @@ fn draw_confirm(
                 y,
                 card.width - 16.0,
                 card.row_height - 2.0,
-                6.0,
+                radius,
                 theme.selected_background,
                 None,
             );
@@ -196,6 +198,7 @@ fn draw_rows(
 ) {
     let rows = &session.rows;
     let selected = session.selected;
+    let radius = session.config.border_radius();
     let end = (scroll + card.visible_rows).min(rows.len());
     for (view_i, index) in (scroll..end).enumerate() {
         let Some(row) = rows.get(index) else {
@@ -209,7 +212,7 @@ fn draw_rows(
                 y,
                 card.width - 16.0,
                 card.row_height - 2.0,
-                6.0,
+                radius,
                 theme.selected_background,
                 None,
             );
@@ -284,20 +287,18 @@ pub fn hit_test_row(session: &MenuSession, layout: &CardLayout, x: f32, y: f32) 
     (index < session.rows.len() && view_index < layout.visible_rows).then_some(index)
 }
 
+/// Fill (and optional stroke) a rectangle with corner radius.
 fn draw_round_rect(
     pixmap: &mut Pixmap,
     x: f32,
     y: f32,
     width: f32,
     height: f32,
-    _radius: f32,
+    radius: f32,
     fill: Color,
     stroke: Option<(Color, f32)>,
 ) {
-    let rect = tiny_skia::Rect::from_xywh(x, y, width, height).unwrap();
-    let mut pb = PathBuilder::new();
-    pb.push_rect(rect);
-    let path = pb.finish().unwrap();
+    let path = rounded_rect_path(x, y, width, height, radius);
     let mut paint = Paint::default();
     paint.set_color(fill);
     paint.anti_alias = true;
@@ -316,6 +317,30 @@ fn draw_round_rect(
             None,
         );
     }
+}
+
+/// Build a closed rounded-rect path; radius 0 falls back to a sharp rect.
+fn rounded_rect_path(x: f32, y: f32, w: f32, h: f32, radius: f32) -> Path {
+    let r = radius.max(0.0).min(w * 0.5).min(h * 0.5);
+    let mut pb = PathBuilder::new();
+    if r < 0.01 {
+        let rect = Rect::from_xywh(x, y, w, h).unwrap();
+        pb.push_rect(rect);
+        return pb.finish().unwrap();
+    }
+    // Cubic approximation of a quarter circle (kappa).
+    let c = r * 0.552_284_75;
+    pb.move_to(x + r, y);
+    pb.line_to(x + w - r, y);
+    pb.cubic_to(x + w - r + c, y, x + w, y + r - c, x + w, y + r);
+    pb.line_to(x + w, y + h - r);
+    pb.cubic_to(x + w, y + h - r + c, x + w - r + c, y + h, x + w - r, y + h);
+    pb.line_to(x + r, y + h);
+    pb.cubic_to(x + r - c, y + h, x, y + h - r + c, x, y + h - r);
+    pb.line_to(x, y + r);
+    pb.cubic_to(x, y + r - c, x + r - c, y, x + r, y);
+    pb.close();
+    pb.finish().unwrap()
 }
 
 fn draw_text(

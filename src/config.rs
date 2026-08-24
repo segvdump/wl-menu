@@ -1,4 +1,4 @@
-//! Theme, layout, and path config for wl-menu.
+//! Theme, layout, and path config for wl-menu (TOML load, includes, color parsing).
 
 use serde::Deserialize;
 use std::collections::HashSet;
@@ -25,6 +25,7 @@ width = 420
 row_height = 36
 padding = 12
 max_rows = 12
+border_radius = 10
 
 [font]
 family = "Hack Nerd Font Mono"
@@ -70,6 +71,8 @@ pub struct Theme {
     pub border: Color,
     pub selected_background: Color,
     pub selected_text: Color,
+    /// Optional override for `layout.border_radius`.
+    pub border_radius: Option<f32>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -78,6 +81,8 @@ pub struct Layout {
     pub row_height: f32,
     pub padding: f32,
     pub max_rows: usize,
+    /// Corner radius for the menu card and selection highlights.
+    pub border_radius: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -135,12 +140,14 @@ impl Default for Config {
                 border: parse_rgba("rgba(130, 250, 155, 89)").expect("border"),
                 selected_background: parse_rgba("rgba(221, 247, 255, 20)").expect("selected bg"),
                 selected_text: parse_rgba("rgba(130, 250, 155, 255)").expect("selected text"),
+                border_radius: None,
             },
             layout: Layout {
                 width: 420.0,
                 row_height: 36.0,
                 padding: 12.0,
                 max_rows: 12,
+                border_radius: 10.0,
             },
             font: FontConfig {
                 family: "Hack Nerd Font Mono".into(),
@@ -203,6 +210,14 @@ impl Config {
         cfg
     }
 
+    /// Corner radius used for the card and selection rows (`theme` wins over `layout`).
+    pub fn border_radius(&self) -> f32 {
+        self.theme
+            .border_radius
+            .unwrap_or(self.layout.border_radius)
+            .max(0.0)
+    }
+
     fn merge(mut self, file: FileConfig, base_dir: &Path) -> Self {
         if let Some(menu) = file.menu {
             self.menu_path = expand_path(&menu, base_dir);
@@ -263,6 +278,7 @@ impl Theme {
             border: parse_color_field(file.border, self.border),
             selected_background: parse_color_field(file.selected_background, self.selected_background),
             selected_text: parse_color_field(file.selected_text, self.selected_text),
+            border_radius: file.border_radius.or(self.border_radius),
         }
     }
 }
@@ -274,6 +290,7 @@ impl Layout {
             row_height: file.row_height.unwrap_or(self.row_height),
             padding: file.padding.unwrap_or(self.padding),
             max_rows: file.max_rows.unwrap_or(self.max_rows),
+            border_radius: file.border_radius.unwrap_or(self.border_radius),
         }
     }
 }
@@ -327,6 +344,7 @@ struct ThemeFile {
     border: Option<String>,
     selected_background: Option<String>,
     selected_text: Option<String>,
+    border_radius: Option<f32>,
 }
 
 #[derive(Default, Deserialize)]
@@ -335,6 +353,7 @@ struct LayoutFile {
     row_height: Option<f32>,
     padding: Option<f32>,
     max_rows: Option<usize>,
+    border_radius: Option<f32>,
 }
 
 #[derive(Default, Deserialize)]
@@ -569,6 +588,22 @@ mod tests {
         assert_eq!(cfg.layout.width, 200.0);
         assert_eq!(cfg.layout.max_rows, 4);
         assert_eq!(cfg.menu_path, dir.join("menu.jsonc"));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn theme_border_radius_overrides_layout() {
+        let dir = env::temp_dir().join(format!("wl-menu-cfg-{}-radius", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("wl-menu.toml"),
+            "[layout]\nborder_radius = 10\n[theme]\nborder_radius = 4\n",
+        )
+        .unwrap();
+        let cfg = Config::load(Some(&dir.join("wl-menu.toml")));
+        assert_eq!(cfg.layout.border_radius, 10.0);
+        assert_eq!(cfg.theme.border_radius, Some(4.0));
+        assert_eq!(cfg.border_radius(), 4.0);
         let _ = fs::remove_dir_all(&dir);
     }
 

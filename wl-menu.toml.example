@@ -12,6 +12,7 @@ width = 420
 row_height = 36
 padding = 12
 max_rows = 12
+border_radius = 10
 
 [font]
 family = "Hack Nerd Font Mono"
@@ -32,3 +33,5 @@ text = "rgba(221, 247, 255, 255)"
 border = "rgba(130, 250, 155, 89)"
 selected_background = "rgba(221, 247, 255, 20)"
 selected_text = "rgba(130, 250, 155, 255)"
+# Optional override of layout.border_radius:
+# border_radius = 8

@@ -38,6 +38,8 @@ Default: `$XDG_CONFIG_HOME/wl-menu/wl-menu.toml` (`~/.config/wl-menu/wl-menu.tom
 
 Load order: built-in defaults, then `include` files in listed order, then the primary file (local keys win). Paths expand `~` and `$VAR` / `${VAR}`. Relative paths are resolved against the file that contains them.
 
+`layout.border_radius` (default `10`) sets card and selection corner radius; `theme.border_radius` overrides it when set.
+
 See `wl-menu.toml.example`.
 
 ## Menu data
