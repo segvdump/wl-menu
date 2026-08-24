@@ -61,11 +61,15 @@ fn main() {
     }
 
     let response = match args.command.unwrap() {
-        CommandKind::Open { route } => ipc_call(IpcRequest::Open { menu: route }),
-        CommandKind::Toggle { route } => ipc_call(IpcRequest::Toggle { menu: route }),
-        CommandKind::Close => ipc_call(IpcRequest::Close),
-        CommandKind::Reload => ipc_call(IpcRequest::Reload),
-        CommandKind::Ping => ipc_call(IpcRequest::Ping),
+        CommandKind::Open { route } => {
+            ipc_call(IpcRequest::Open { menu: route }, args.config.as_deref())
+        }
+        CommandKind::Toggle { route } => {
+            ipc_call(IpcRequest::Toggle { menu: route }, args.config.as_deref())
+        }
+        CommandKind::Close => ipc_call(IpcRequest::Close, args.config.as_deref()),
+        CommandKind::Reload => ipc_call(IpcRequest::Reload, args.config.as_deref()),
+        CommandKind::Ping => ipc_call(IpcRequest::Ping, args.config.as_deref()),
     };
 
     if response.ok {
@@ -78,14 +82,14 @@ fn main() {
     std::process::exit(1);
 }
 
-fn ipc_call(request: IpcRequest) -> IpcResponse {
+fn ipc_call(request: IpcRequest, config: Option<&std::path::Path>) -> IpcResponse {
     let path = socket_path();
     match client_call(&path, &request) {
         Ok(response) => response,
         Err(err) => {
             if matches!(request, IpcRequest::Toggle { .. } | IpcRequest::Open { .. }) {
                 eprintln!("{LOG_PREFIX}: {err}, starting daemon");
-                spawn_daemon();
+                spawn_daemon(config);
                 std::thread::sleep(std::time::Duration::from_millis(250));
                 return client_call(&path, &request).unwrap_or(IpcResponse::err(err));
             }
@@ -94,9 +98,15 @@ fn ipc_call(request: IpcRequest) -> IpcResponse {
     }
 }
 
-fn spawn_daemon() {
+/// Spawn a detached daemon, forwarding `--config` when the client used one.
+fn spawn_daemon(config: Option<&std::path::Path>) {
     let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("wl-menu"));
-    let _ = Command::new(exe).arg("--daemon").spawn();
+    let mut cmd = Command::new(exe);
+    cmd.arg("--daemon");
+    if let Some(path) = config {
+        cmd.arg("--config").arg(path);
+    }
+    let _ = cmd.spawn();
 }
 
 fn run_daemon(config_path: Option<&std::path::Path>) {
