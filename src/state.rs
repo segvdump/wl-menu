@@ -247,6 +247,20 @@ impl MenuSession {
         self.selected = next as usize;
     }
 
+    /// True when Right arrow may drill into the selected row (Menu or Link only).
+    pub fn selected_opens_submenu(&self) -> bool {
+        if self.confirm.is_some() {
+            return false;
+        }
+        let Some(row) = self.rows.get(self.selected) else {
+            return false;
+        };
+        let Some(item) = self.tree.item(&row.id) else {
+            return false;
+        };
+        matches!(item.kind, ItemKind::Menu | ItemKind::Link)
+    }
+
     pub fn activate_selected(&mut self) {
         debug::log(format!(
             "activate_selected: entry active={:?} selected={} {}",
@@ -501,5 +515,51 @@ mod tests {
         assert_eq!(session.active, "root");
         assert!(!session.go_back());
         assert!(session.visible);
+    }
+
+    #[test]
+    fn selected_opens_submenu_only_for_menu_and_link() {
+        let tree = MenuTree::merge(vec![parse_menu_jsonc(
+            r#"{
+                "folder": { "label": "Folder" },
+                "jump": { "label": "Jump", "target": "folder" },
+                "run": { "label": "Run", "action": "true", "confirm": "Sure?" }
+            }"#,
+        )]);
+        let mut session = MenuSession {
+            config: Config::default(),
+            tree,
+            visible: true,
+            active: "root".into(),
+            nav_stack: Vec::new(),
+            filter: String::new(),
+            selected: 0,
+            guards: GuardResults::default(),
+            rows: Vec::new(),
+            confirm: None,
+            icons: IconCache::new(),
+            providers_loaded: HashSet::new(),
+        };
+        session.rebuild_rows();
+
+        let index_of = |session: &MenuSession, id: &str| {
+            session
+                .rows
+                .iter()
+                .position(|row| row.id == id)
+                .expect(id)
+        };
+
+        session.selected = index_of(&session, "folder");
+        assert!(session.selected_opens_submenu());
+
+        session.selected = index_of(&session, "jump");
+        assert!(session.selected_opens_submenu());
+
+        session.selected = index_of(&session, "run");
+        assert!(!session.selected_opens_submenu());
+
+        session.request_confirm("run");
+        assert!(!session.selected_opens_submenu());
     }
 }

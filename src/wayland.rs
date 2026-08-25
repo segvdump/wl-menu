@@ -639,9 +639,16 @@ impl App {
                 self.sync_keyboard_interactivity();
                 self.present();
             }
-            Keysym::Return | Keysym::KP_Enter | Keysym::Right => {
+            Keysym::Return | Keysym::KP_Enter => {
                 self.clear_key_repeat();
                 self.activate_from_keyboard();
+            }
+            Keysym::Right => {
+                self.clear_key_repeat();
+                // Right drills into submenus only; leaf actions need Enter.
+                if self.session.selected_opens_submenu() {
+                    self.activate_from_keyboard();
+                }
             }
             Keysym::BackSpace => {
                 self.clear_key_repeat();
