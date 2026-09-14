@@ -56,6 +56,8 @@ Default: `$XDG_CONFIG_HOME/wl-menu/menu.jsonc`. Override with `menu` in the conf
 
 `provider`: dynamic children for a menu node. Built-in value: `"apps"` (XDG `.desktop` entries). Loaded when that menu is opened or when searching from an ancestor.
 
+`when`: bash expression. The item is visible when the expression exits 0. Re-checked each time the menu opens (`open` / `toggle`). Use two mutually exclusive items (e.g. start vs stop) for stateful actions.
+
 `confirm`: prompt shown in the dialog header before running `action`. If set (non-empty), the action asks for confirmation first. Default prompt is `Run <label>?`.
 
 `confirmText`: label of the confirming button (default `Confirm`). Cancel is always `Cancel`.

@@ -115,6 +115,7 @@ impl MenuSession {
         self.filter.clear();
         self.selected = 0;
         self.confirm = None;
+        self.guards = self.tree.evaluate_guards();
         self.ensure_provider(&active);
         self.rebuild_rows();
         self.log_rows_snapshot("after show_menu");

@@ -53,4 +53,19 @@
 
   // File icon example (path relative to this menu file):
   // "custom": { "label": "Custom", "icon": "file:./icons/star.png", "action": "notify-send hi" }
+
+  // Stateful toggle via mutually exclusive `when` (re-checked on each open):
+  // "capture": { "label": "Capture", "icon": "theme:camera-photo" },
+  // "capture.screen-record": {
+  //   "label": "Screen record",
+  //   "icon": "theme:media-record",
+  //   "when": "! pgrep -x wf-recorder >/dev/null",
+  //   "action": "wf-recorder -f ~/Videos/rec-$(date +%s).mp4 &"
+  // },
+  // "capture.stop-record": {
+  //   "label": "Stop recording",
+  //   "icon": "theme:media-playback-stop",
+  //   "when": "pgrep -x wf-recorder >/dev/null",
+  //   "action": "pkill -INT wf-recorder"
+  // }
 }

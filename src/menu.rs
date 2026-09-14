@@ -493,4 +493,48 @@ mod tests {
         assert!(tree.item("root").is_some());
         assert!(tree.children("root", &GuardResults::default()).is_empty());
     }
+
+    #[test]
+    fn when_guards_show_one_of_mutually_exclusive_siblings() {
+        let tree = MenuTree::merge(vec![parse_menu_jsonc(
+            r#"{
+                "capture": { "label": "Capture" },
+                "capture.start": {
+                    "label": "Screen record",
+                    "when": "! pgrep -x wf-recorder >/dev/null",
+                    "action": "true"
+                },
+                "capture.stop": {
+                    "label": "Stop recording",
+                    "when": "pgrep -x wf-recorder >/dev/null",
+                    "action": "true"
+                }
+            }"#,
+        )]);
+        let recording = GuardResults {
+            when_ok: HashMap::from([
+                ("capture.start".into(), false),
+                ("capture.stop".into(), true),
+            ]),
+        };
+        let labels: Vec<_> = tree
+            .children("capture", &recording)
+            .into_iter()
+            .map(|item| item.label.as_str())
+            .collect();
+        assert_eq!(labels, ["Stop recording"]);
+
+        let idle = GuardResults {
+            when_ok: HashMap::from([
+                ("capture.start".into(), true),
+                ("capture.stop".into(), false),
+            ]),
+        };
+        let labels: Vec<_> = tree
+            .children("capture", &idle)
+            .into_iter()
+            .map(|item| item.label.as_str())
+            .collect();
+        assert_eq!(labels, ["Screen record"]);
+    }
 }
