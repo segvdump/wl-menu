@@ -144,7 +144,8 @@ impl MenuSession {
             Some(entry) if !entry.provider.is_empty() => entry.provider.clone(),
             _ => return,
         };
-        if self.providers_loaded.contains(menu_id) {
+        // Apps install/remove while the daemon runs; a full .desktop scan is ~ms, so never cache it.
+        if provider != "apps" && self.providers_loaded.contains(menu_id) {
             debug::log(format!("ensure_provider: {menu_id:?} provider={provider:?} already loaded"));
             return;
         }
@@ -153,6 +154,7 @@ impl MenuSession {
             let apps = apps::scan_apps();
             debug::log(format!("ensure_provider: merge_apps count={}", apps.len()));
             self.tree.merge_apps(apps);
+            return;
         }
         self.providers_loaded.insert(menu_id.to_string());
     }

@@ -39,7 +39,7 @@ pub fn scan_apps() -> Vec<MenuItem> {
             .cmp(&b.label.to_lowercase())
             .then_with(|| a.id.cmp(&b.id))
     });
-    eprintln!("{LOG_PREFIX}: apps provider loaded {} entries", rows.len());
+    crate::debug::log(format!("{LOG_PREFIX}: apps provider loaded {} entries", rows.len()));
     rows
 }
 

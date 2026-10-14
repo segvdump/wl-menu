@@ -54,7 +54,7 @@ Default: `$XDG_CONFIG_HOME/wl-menu/menu.jsonc`. Override with `menu` in the conf
 
 `aliases`: string or array of strings. Extra names for the item. Matched by `open` / `toggle` routes (case-insensitive, `_` and `-` equivalent) and by the in-menu filter.
 
-`provider`: dynamic children for a menu node. Built-in value: `"apps"` (XDG `.desktop` entries). Loaded when that menu is opened or when searching from an ancestor.
+`provider`: dynamic children for a menu node. Built-in value: `"apps"` (XDG `.desktop` entries). Rescanned when that menu is opened or when searching from an ancestor.
 
 `when`: bash expression. The item is visible when the expression exits 0. Re-checked each time the menu opens (`open` / `toggle`). Use two mutually exclusive items (e.g. start vs stop) for stateful actions.
 
